@@ -1,6 +1,6 @@
 # nestjs-mastra-mcp-gateway
 
-A learning project demonstrating how to build an **MCP (Model Context Protocol) gateway** using **NestJS** and **Mastra**. 
+A project demonstrating how to build an **MCP (Model Context Protocol) gateway** using **NestJS** and **Mastra**. 
 
 Currently exposes a Wikipedia MCP surface as an example. The architecture is designed to be extended with new MCP interfaces (Jira, Slack, your own APIs) in the same runtime. MIT licensed — fork it, learn from it, adapt it for your needs.
 
