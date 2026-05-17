@@ -1,16 +1,18 @@
 # nestjs-mastra-mcp-gateway
 
-A production-style **Model Context Protocol** gateway built with **NestJS** and **Mastra**. This repository is intentionally structured as a gateway shell that currently exposes a Wikipedia MCP surface, but can be extended with new MCP interfaces in the same runtime.
+A learning project demonstrating how to build an **MCP (Model Context Protocol) gateway** using **NestJS** and **Mastra**. 
 
-It demonstrates what a real MCP gateway looks like beyond hello-world:
-- pluggable authentication
-- request-scoped context propagation via AsyncLocalStorage
-- Zod-validated configuration
-- response caching in Redis
-- graceful shutdown
-- tools implemented as first-class Mastra `createTool()` definitions
+Currently exposes a Wikipedia MCP surface as an example. The architecture is designed to be extended with new MCP interfaces (Jira, Slack, your own APIs) in the same runtime. MIT licensed — fork it, learn from it, adapt it for your needs.
 
-## Gateway quick start
+**What this teaches:**
+- How to structure an MCP gateway with pluggable auth
+- Request-scoped context propagation via AsyncLocalStorage
+- Zod-validated configuration (fail fast on boot)
+- Redis caching for external APIs
+- Clean error handling and graceful shutdown
+- Tool definitions as first-class Mastra `createTool()` functions
+
+## Quick start
 
 ```sh
 docker compose up
@@ -31,9 +33,17 @@ The running gateway exposes these Wikipedia tools:
 
 No accounts or API keys required in the default mode.
 
-## What makes this a gateway
+## What you're looking at
 
-This repo is more than a Wikipedia sample. It is a gateway framework with reusable pieces:
+This is **not a live service** — it's a learning project. Run it locally, explore it, fork it, adapt it.
+
+The goal is to show:
+- How to architect an MCP gateway (not just a single tool)
+- How to handle auth properly (even though Wikipedia doesn't need it)
+- How to add new MCP surfaces without breaking existing ones
+- How to structure code for readability and extension
+
+## What makes this a gateway
 
 - `src/mcp/wikipedia-mcp.controller.ts` — HTTP entrypoint for MCP Streamable HTTP at `/mcp/wikipedia`
 - `src/mcp/wikipedia-mcp.provider.ts` — registers the MCP server and the tool surface
@@ -117,13 +127,13 @@ npx tsx scripts/mcp-probe.ts
 
 ## Highlights
 
-- **Gateway-first design.** The repo is written as a gateway shell that can host multiple MCP surfaces, with Wikipedia as the initial example.
-- **Pluggable authentication.** `AuthProvider` is an interface. The project ships with `NoopAuthProvider` and `OidcJwtAuthProvider`, and additional providers can be plugged in with minimal change.
-- **Request-scoped context.** `runWithRequestContext()` threads the current `Principal` through MCP tool execution, so tools can authorize without extra schema fields.
-- **Zod config validation.** Environment values are parsed and validated at boot, with clear failures for missing or malformed config.
-- **Redis caching.** Wikipedia API responses are cached for 24h; cache failures are logged and silently ignored.
-- **Graceful shutdown.** NestJS shutdown hooks and Redis cleanup are wired for safe process exit.
-- **Tool-centric implementation.** Each MCP tool is a discrete `createTool()` definition with its own input schema and handler.
+- **Gateway-first design.** The repo is structured as a reusable gateway shell. Wikipedia is the first surface; add more without changing core code.
+- **Pluggable auth.** Swap auth providers with an env var — no code changes. Ships with `NoopAuthProvider` and `OidcJwtAuthProvider`. Add your own by implementing the interface.
+- **Request-scoped context.** `runWithRequestContext()` threads the current `Principal` through tool execution so tools can check permissions without schema pollution.
+- **Zod config validation.** All env vars are parsed and validated at boot. Fails fast with clear error messages.
+- **Redis caching.** API responses are cached for 24h. Cache misses are logged and ignored — the live call always runs.
+- **Clean tool definitions.** Each MCP tool is a discrete `createTool()` with its own input schema. One file per tool. Easy to find, easy to test.
+- **Learning patterns.** Request lifecycle, error handling, shutdown hooks — patterns you'd use in a real system.
 
 ## Tools
 
@@ -158,6 +168,13 @@ MCP_API_KEY=your-key
 
 If `MCP_API_KEY` is present, every request must send `x-api-key: <value>`.
 
+## Why you'd fork this
+
+- You want to understand MCP gateways without building from scratch
+- You're thinking about exposing internal APIs (Jira, Slack, etc.) via MCP
+- You want a reference for handling auth + caching + tool dispatch properly
+- You want to add multiple surfaces to one gateway
+
 ## Extending the gateway
 
 ### Add a new MCP surface
@@ -167,6 +184,8 @@ If `MCP_API_KEY` is present, every request must send `x-api-key: <value>`.
 3. Add new tool definitions in `src/mcp/tools/`.
 4. Register the new controller/provider in `src/mcp/mcp.module.ts`.
 
+That's it. You now have `/mcp/wikipedia` and `/mcp/<name>` running in the same gateway.
+
 ### Add a new auth provider
 
 1. Implement [`AuthProvider`](src/auth/auth-provider.interface.ts).
@@ -174,7 +193,7 @@ If `MCP_API_KEY` is present, every request must send `x-api-key: <value>`.
 
 ### Add tenant-scoped authorization
 
-Use [src/authorization/assert-tenant-access.ts](src/authorization/assert-tenant-access.ts) inside tool handlers.
+Use [src/authorization/assert-tenant-access.ts](src/authorization/assert-tenant-access.ts) inside tool handlers when you need per-tenant isolation.
 
 ## Tech stack
 
@@ -187,6 +206,12 @@ Use [src/authorization/assert-tenant-access.ts](src/authorization/assert-tenant-
 | Cache | [redis](https://github.com/redis/node-redis) |
 | HTTP | [axios](https://axios-http.com) |
 | Build/test | TypeScript, ts-jest, ESLint, Prettier |
+
+## What this is NOT
+
+- **Not a live service.** No production deployment. Run it locally.
+- **Not fully battle-tested.** It's a learning project. Use the patterns, adapt the code.
+- **Not a framework.** It's a reference implementation. Fork it and make it yours.
 
 ## Scripts
 
@@ -201,4 +226,4 @@ Use [src/authorization/assert-tenant-access.ts](src/authorization/assert-tenant-
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Created for learning purposes. Use, modify, and extend as you need.
